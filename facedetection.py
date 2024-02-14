@@ -10,7 +10,7 @@ data = pd.read_csv('datasetlagu.csv')
 
 def filter_songs_by_emotion(emotion):
     filtered_songs = data[data['Emotion'] == emotion]
-    return filtered_songs[['Artist', 'Song', 'Emotion']]
+    return filtered_songs[['Artist', 'Song']]
 
 # Memuat model deteksi emosi
 model = load_model('best_model.h5')
@@ -52,12 +52,10 @@ class FaceEmotionTransformer(VideoTransformerBase):
                 # Menambahkan teks emosi di atas video
                 cv2.putText(image, f"Emotion: {emotion_label}", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
-                # Menyiapkan teks rekomendasi lagu
-                recommended_text = "\n".join([f"{row['Song']} - {row['Artist']}" for _, row in recommended_songs.iterrows()])
-
-                # Menampilkan teks rekomendasi lagu menggunakan Streamlit
-                st.text("Recommended Songs:")
-                st.write(recommended_text)
+                # Menampilkan rekomendasi lagu
+                st.write("Recommended Songs:")
+                for index, row in recommended_songs.iterrows():
+                    st.write(f"{row['Song']} - {row['Artist']}")
 
         except cv2.error:
             pass
