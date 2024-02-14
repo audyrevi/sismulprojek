@@ -1,8 +1,8 @@
-import cv2
 import numpy as np
 import streamlit as st
 import pandas as pd
 from keras.models import load_model
+from PIL import Image
 
 # Membaca dataset lagu
 data = pd.read_csv('datasetlagu.csv')
@@ -19,8 +19,6 @@ labels = {0: 'angry', 1: 'disgust', 2: 'fear', 3: 'happy', 4: 'neutral', 5: 'sad
 def recommend_songs(emotion_label):
     recommended_songs = filter_songs_by_emotion(emotion_label)
     return recommended_songs
-
-face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 #UI
 st.markdown("<h1 style=' color: #800000; text-align: center;'>Welcome to our Music Recommendation Based on Face Emotion Recognition App! </h1>", unsafe_allow_html=True)
@@ -50,31 +48,31 @@ st.markdown(
 clicked = st.button("Click to Detect Emotion and Recommend Songs")
 
 if clicked:
-    webcam = cv2.VideoCapture(0)
-    _, im = webcam.read()
-    gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(im, 1.3, 5)
-    try:
-        for (p, q, r, s) in faces:
-            image = gray[q:q+s, p:p+r]
-            image = cv2.resize(image, (48, 48))
-            img = np.array(image).reshape(1, 48, 48, 1) / 255.0
-            pred = model.predict(img)
-            emotion_label = labels[pred.argmax()]
-            
-            recommended_songs = recommend_songs(emotion_label)
-            
-            # Menambahkan teks emosi di atas video
-            cv2.putText(im, f"Emotion: {emotion_label}", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-            
-            st.image(im, channels="BGR")
+    image = st.file_uploader("Upload Image", type=["jpg", "jpeg", "png"])
 
-            st.subheader("Recommended Songs For You:")
-            st.markdown("<ul>", unsafe_allow_html=True)
-            for index, row in recommended_songs.iterrows():
-                text = f"<li>{row['Song']} - {row['Artist']}</li>"
-                st.markdown(text, unsafe_allow_html=True)
-            st.markdown("</ul>", unsafe_allow_html=True)
+    if image is not None:
+        image = Image.open(image)
+        image = np.array(image)
+        gray = np.dot(image[...,:3], [0.2989, 0.5870, 0.1140]) # Convert ke grayscale
+        faces = None # Proses deteksi wajah bisa diganti dengan algoritma lain jika diperlukan
+        try:
+            for (p, q, r, s) in faces:
+                face_image = gray[q:q+s, p:p+r]
+                resized_image = np.array(Image.fromarray(face_image).resize((48, 48)))  # Resize gambar
+                img = resized_image.reshape(1, 48, 48, 1) / 255.0
+                pred = model.predict(img)
+                emotion_label = labels[pred.argmax()]
                 
-    except cv2.error:
-        pass
+                recommended_songs = recommend_songs(emotion_label)
+                
+                st.image(resized_image, channels="GRAY")
+
+                st.subheader("Recommended Songs For You:")
+                st.markdown("<ul>", unsafe_allow_html=True)
+                for index, row in recommended_songs.iterrows():
+                    text = f"<li>{row['Song']} - {row['Artist']}</li>"
+                    st.markdown(text, unsafe_allow_html=True)
+                st.markdown("</ul>", unsafe_allow_html=True)
+                
+        except Exception as e:
+            print(e)
