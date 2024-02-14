@@ -5,6 +5,6 @@ numpy
 jupyter
 notebook
 tqdm
-opencv-contrib-python
+streamlit opencv-python Pillow
 scikit-learn
 streamlit
