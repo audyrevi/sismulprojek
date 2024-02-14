@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 from keras.models import load_model
 from streamlit_webrtc import VideoTransformerBase, webrtc_streamer
+import cv2
 
 # Membaca dataset lagu
 data = pd.read_csv('datasetlagu.csv')
@@ -75,4 +76,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-webrtc_streamer(key="example", video_transformer_factory=VideoTransformer)
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+webrtc_ctx = webrtc_streamer(key="example", video_transformer_factory=VideoTransformer)
