@@ -8,4 +8,3 @@ tqdm
 opencv-python-headless
 scikit-learn
 streamlit
-streamlit_webrtc
