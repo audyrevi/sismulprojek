@@ -6,6 +6,5 @@ jupyter
 notebook
 tqdm
 opencv-python-headless
-libgl1-mesa-glx
 scikit-learn
 streamlit
