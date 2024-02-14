@@ -52,8 +52,12 @@ class FaceEmotionTransformer(VideoTransformerBase):
                 # Menambahkan teks emosi di atas video
                 cv2.putText(image, f"Emotion: {emotion_label}", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
-                for index, row in recommended_songs.iterrows():
-                    cv2.putText(image, f"{row['Song']} - {row['Artist']}", (20, 80 + (index * 40)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                # Menyiapkan teks rekomendasi lagu
+                recommended_text = "\n".join([f"{row['Song']} - {row['Artist']}" for _, row in recommended_songs.iterrows()])
+
+                # Menampilkan teks rekomendasi lagu menggunakan Streamlit
+                st.text("Recommended Songs:")
+                st.write(recommended_text)
 
         except cv2.error:
             pass
