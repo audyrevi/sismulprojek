@@ -1,9 +1,8 @@
+import cv2
 import numpy as np
 import streamlit as st
 import pandas as pd
 from keras.models import load_model
-from streamlit_webrtc import VideoTransformerBase, webrtc_streamer
-import cv2
 
 # Membaca dataset lagu
 data = pd.read_csv('datasetlagu.csv')
@@ -21,35 +20,7 @@ def recommend_songs(emotion_label):
     recommended_songs = filter_songs_by_emotion(emotion_label)
     return recommended_songs
 
-class VideoTransformer(VideoTransformerBase):
-    def transform(self, frame):
-        img = frame.to_ndarray(format="bgr24")
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-        try:
-            for (p, q, r, s) in faces:
-                face_img = gray[q:q+s, p:p+r]
-                face_img = cv2.resize(face_img, (48, 48))
-                face_img = np.array(face_img).reshape(1, 48, 48, 1) / 255.0
-                pred = model.predict(face_img)
-                emotion_label = labels[pred.argmax()]
-                
-                recommended_songs = recommend_songs(emotion_label)
-                
-                # Menampilkan teks emosi di atas video
-                cv2.putText(img, f"Emotion: {emotion_label}", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-                
-                st.subheader("Recommended Songs For You:")
-                st.markdown("<ul>", unsafe_allow_html=True)
-                for index, row in recommended_songs.iterrows():
-                    text = f"<li>{row['Song']} - {row['Artist']}</li>"
-                    st.markdown(text, unsafe_allow_html=True)
-                st.markdown("</ul>", unsafe_allow_html=True)
-                
-        except cv2.error:
-            pass
-        
-        return img
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 #UI
 st.markdown("<h1 style=' color: #800000; text-align: center;'>Welcome to our Music Recommendation Based on Face Emotion Recognition App! </h1>", unsafe_allow_html=True)
@@ -76,6 +47,34 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+clicked = st.button("Click to Detect Emotion and Recommend Songs")
 
-webrtc_ctx = webrtc_streamer(key="example", video_transformer_factory=VideoTransformer)
+if clicked:
+    webcam = cv2.VideoCapture(0)
+    _, im = webcam.read()
+    gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(im, 1.3, 5)
+    try:
+        for (p, q, r, s) in faces:
+            image = gray[q:q+s, p:p+r]
+            image = cv2.resize(image, (48, 48))
+            img = np.array(image).reshape(1, 48, 48, 1) / 255.0
+            pred = model.predict(img)
+            emotion_label = labels[pred.argmax()]
+            
+            recommended_songs = recommend_songs(emotion_label)
+            
+            # Menambahkan teks emosi di atas video
+            cv2.putText(im, f"Emotion: {emotion_label}", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+            
+            st.image(im, channels="BGR")
+
+            st.subheader("Recommended Songs For You:")
+            st.markdown("<ul>", unsafe_allow_html=True)
+            for index, row in recommended_songs.iterrows():
+                text = f"<li>{row['Song']} - {row['Artist']}</li>"
+                st.markdown(text, unsafe_allow_html=True)
+            st.markdown("</ul>", unsafe_allow_html=True)
+                
+    except cv2.error:
+        pass
